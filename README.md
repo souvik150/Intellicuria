@@ -1,1 +1,1 @@
-# Deploy FastAPI backends on vercel
+# Intellicuria backend
