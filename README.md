@@ -27,12 +27,13 @@ Inserts the generated data into the database.
 
 # API Endpoints:
 
-POST /generate_research/
+1. POST /generate_research/
 
 Expects a JSON payload with a userInput field.
 Calls generate_research function with the provided input.
 Returns a JSON response with a success message and the generated research data.
-GET /previous_research/
+
+2. GET /previous_research/
 
 Retrieves all previous research entries from the database.
 Returns a JSON response with the previous research data.
