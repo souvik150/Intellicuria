@@ -1,14 +1,18 @@
 {
-  "builds": [
-    {
-      "src": "main.py",
-      "use": "@vercel/python"
+  "functions": {
+    "api/**/*": {
+      "runtime": "vercel-python@0.2.4"
     }
-  ],
+  },
   "routes": [
     {
-      "src": "/(.*)",
-      "dest": "main.py"
+      "src": "/generate_research/",
+      "dest": "/api/generate_research.py"
+    },
+    {
+      "src": "/previous_research/",
+      "dest": "/api/previous_research.py"
     }
   ]
 }
+
