@@ -1,6 +1,9 @@
 {
   "functions": {
-    "api/users/**/*": {
+    "api/generate_research.py": {
+      "runtime": "vercel-python@0.2.4"
+    },
+    "api/previous_research.py": {
       "runtime": "vercel-python@0.2.4"
     }
   },
@@ -15,4 +18,3 @@
     }
   ]
 }
-
