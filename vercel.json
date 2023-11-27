@@ -1,20 +1,23 @@
 {
   "functions": {
-    "api/generate_research.py": {
-      "runtime": "vercel-python@0.2.4"
+    "generate_research": {
+      "runtime": "vercel-python@0.2.4",
+      "includeFiles": ["generate_research.py"]
     },
-    "api/previous_research.py": {
-      "runtime": "vercel-python@0.2.4"
+    "previous_research": {
+      "runtime": "vercel-python@0.2.4",
+      "includeFiles": ["previous_research.py"]
     }
   },
   "routes": [
     {
       "src": "/generate_research/",
-      "dest": "/api/generate_research.py"
+      "dest": "/generate_research.py"
     },
     {
       "src": "/previous_research/",
-      "dest": "/api/previous_research.py"
+      "dest": "/previous_research.py"
     }
   ]
 }
+
