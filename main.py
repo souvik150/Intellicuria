@@ -1,6 +1,9 @@
-from fastapi import FastAPI, Request, Form
+
+import os
 import sqlite3
 import pandas as pd
+import json
+from fastapi import FastAPI, Form
 from langchain.llms import OpenAI
 from langchain.utilities import WikipediaAPIWrapper
 from langchain.memory import ConversationBufferMemory
@@ -8,14 +11,14 @@ from langchain.agents import Tool
 from langchain.agents import AgentType
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.tools import DuckDuckGoSearchRun
-from langchain.chains import Chroma, RetrievalQA
 from langchain.vectorstores import Chroma
-from langchain.prompts import PromptTemplate
+import uvicorn
 from langchain.memory import ConversationBufferMemory
-from langchain.chains import LLMChain
 from langchain.agents import initialize_agent
 
 app = FastAPI()
+
+os.environ['OPENAI_API_KEY'] = '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'
 
 
 def create_research_db():
@@ -39,17 +42,24 @@ def read_research_table():
     return df
 
 
-def insert_research(user_input, introduction, quant_facts, publications, books, ytlinks):
+def insert_research(user_input, introduction, quant_facts, publications, books):
     with sqlite3.connect('MASTER.db') as conn:
         cursor = conn.cursor()
+
+        # Convert dictionaries to strings
+        introduction_str = json.dumps(introduction)
+        quant_facts_str = json.dumps(quant_facts)
+        publications_str = json.dumps(publications)
+        books_str = json.dumps(books)
+
         cursor.execute("""
-            INSERT INTO Research (user_input, introduction, quant_facts, publications, books, ytlinks)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (user_input, introduction, quant_facts, publications, books))
+            INSERT INTO Research (user_input, introduction, quant_facts, publications, books)
+            VALUES (?, ?, ?, ?, ?)
+        """, (user_input, introduction_str, quant_facts_str, publications_str, books_str))
 
 
 def generate_research(userInput, TEMP):
-    llm = OpenAI(temperature=TEMP)
+    llm = OpenAI(temperature=TEMP, api_key='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')
     wiki = WikipediaAPIWrapper()
     DDGsearch = DuckDuckGoSearchRun()
     tools = [
@@ -72,31 +82,42 @@ def generate_research(userInput, TEMP):
                                 memory=memory,
                                 handle_parsing_errors=True)
 
-    intro = runAgent(f'Write an academic introduction about {userInput}')
-    quantFacts = runAgent(f'''
+    intro_response = runAgent(f'Write an academic introduction about {userInput}')
+    try:
+       intro = intro_response['output']['page_content']
+    except KeyError:
+                   intro = intro_response['output'][0]  
+                   
+    quant_facts_response = runAgent(f'''
         Considering user input: {userInput} and the intro paragraph: {intro} 
         \nGenerate a list of 3 to 5 quantitative facts about: {userInput}
         \nOnly return the list of quantitative facts
     ''')
-    papers = runAgent(f'''
+    quant_facts = quant_facts_response['output'][0]
+
+    papers_response = runAgent(f'''
         Consider user input: "{userInput}".
         \nConsider the intro paragraph: "{intro}",
-        \nConsider these quantitative facts "{quantFacts}"
+        \nConsider these quantitative facts "{quant_facts}"
         \nNow Generate a list of 2 to 3 recent academic papers relating to {userInput}.
         \nInclude Titles, Links, Abstracts. 
     ''')
-    readings = runAgent(f'''
+    papers_content = papers_response['output'][0]
+
+    readings_response = runAgent(f'''
         Consider user input: "{userInput}".
         \nConsider the intro paragraph: "{intro}",
-        \nConsider these quantitative facts "{quantFacts}"
+        \nConsider these quantitative facts "{quant_facts}"
         \nNow Generate a list of 5 relevant books to read relating to {userInput}.
     ''')
+    readings_content = readings_response['output'][0]
 
     insert_research(userInput,
-                    intro['output'],
-                    quantFacts['output'],
-                    papers['output'],
-                    readings['output'])
+                    intro,
+                    quant_facts,
+                    papers_content,
+                    readings_content)
+
 
 
 @app.post("/generate_report")
@@ -121,6 +142,4 @@ def previous_research():
 
 
 if __name__ == "__main__":
-    import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8000, log_level="info")
-

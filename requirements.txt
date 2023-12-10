@@ -1,8 +1,10 @@
-fastapi[all]
+fastapi==0.75.0
 openai
-python-dotenv
-pydantic==1.*
+python-dotenv==0.20.0
+pydantic
 langchain
-bs4
-tiktoken
-flask
+bs4==0.0.1
+flask==2.2.2
+pandas==1.5.2
+uvicorn
+python-multipart
